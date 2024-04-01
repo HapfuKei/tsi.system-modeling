@@ -1,4 +1,4 @@
-package com.hapfu.course.views.model2;
+package com.hapfu.course.views.model.two;
 
 import com.hapfu.course.views.MainLayout;
 import com.vaadin.flow.component.Composite;
