@@ -2,6 +2,8 @@ package com.hapfu.course.data.model.one.generators;
 
 import com.hapfu.course.services.model.one.RandomService;
 
+import java.math.BigDecimal;
+
 public class ErlangRandomGenerator implements RandomGenerator {
 
     private final int l;
@@ -15,7 +17,7 @@ public class ErlangRandomGenerator implements RandomGenerator {
     }
 
     @Override
-    public double generate() {
+    public BigDecimal generate() {
         return randomService.getErlang(l, lambda);
     }
 

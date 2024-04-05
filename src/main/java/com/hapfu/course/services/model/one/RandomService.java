@@ -2,38 +2,45 @@ package com.hapfu.course.services.model.one;
 
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.SplittableRandom;
 import java.util.stream.IntStream;
 
 @Service
 public class RandomService {
 
-    private static final SplittableRandom random = new SplittableRandom();
+    private static final SplittableRandom random = new SplittableRandom(12345);
+    private final MathContext mathContext = new MathContext(4); // Define the precision level
 
-    private static double getBaseRandom() {
-        return random.nextDouble(0, 1);
+    private BigDecimal getBaseRandom() {
+        return BigDecimal.valueOf(random.nextDouble());
     }
 
-    public double getExponential(double lambda) {
-        double u = getBaseRandom();
-        if (u == 0.0) u = Double.MIN_VALUE;
-        return -Math.log(u) / lambda;
+    public BigDecimal getExponential(double lambda) {
+        BigDecimal u = getBaseRandom();
+        if (u.compareTo(BigDecimal.ZERO) == 0) u = BigDecimal.valueOf(Double.MIN_VALUE);
+        return BigDecimal.valueOf(-Math.log(u.doubleValue()))
+                .divide(BigDecimal.valueOf(lambda), mathContext);
     }
 
-
-    public double getErlang(int l, double lambda) {
+    public BigDecimal getErlang(int l, double lambda) {
         return IntStream.range(0, l)
-                .mapToDouble(operand -> getExponential(lambda))
-                .sum();
+                .mapToObj(operand -> getExponential(lambda))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public double getNormal(int l, double sigma, double mu) {
-        double sum = IntStream.range(0, l)
-                .mapToDouble(i -> getBaseRandom())
-                .sum();
+    public BigDecimal getNormal(double sigma, double mu) {
+        BigDecimal sum = IntStream.range(0, 12)
+                .mapToObj(i -> getBaseRandom())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        double z = (sum - (double) l / 2) / Math.sqrt((double) l / 12);
-        return z * sigma + mu;
+        BigDecimal n = BigDecimal.valueOf(12);
+        BigDecimal z = sum.subtract(n.divide(new BigDecimal(2), mathContext))
+                .divide(BigDecimal.valueOf(Math.sqrt(n.doubleValue() / 12)), mathContext);
+
+        BigDecimal result = z.multiply(BigDecimal.valueOf(sigma))
+                .add(BigDecimal.valueOf(mu));
+        return result.max(BigDecimal.ZERO);
     }
-
 }

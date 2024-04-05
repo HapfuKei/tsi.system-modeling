@@ -2,6 +2,8 @@ package com.hapfu.course.data.model.one.generators;
 
 import com.hapfu.course.services.model.one.RandomService;
 
+import java.math.BigDecimal;
+
 public class ExponentialRandomGenerator implements RandomGenerator {
 
     private final double lambda;
@@ -13,7 +15,7 @@ public class ExponentialRandomGenerator implements RandomGenerator {
     }
 
     @Override
-    public double generate() {
+    public BigDecimal generate() {
         return randomService.getExponential(lambda);
     }
 

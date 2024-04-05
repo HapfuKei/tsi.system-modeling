@@ -7,6 +7,7 @@ import com.hapfu.course.views.model.two.Model2View;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility.*;
 import org.vaadin.lineawesome.LineAwesomeIcon;
@@ -14,6 +15,7 @@ import org.vaadin.lineawesome.LineAwesomeIcon;
 /**
  * The main view is a top-level placeholder for other views.
  */
+
 public class MainLayout extends AppLayout {
 
     public MainLayout() {
@@ -49,7 +51,7 @@ public class MainLayout extends AppLayout {
     }
 
     private MenuItemInfo[] createMenuItems() {
-        return new MenuItemInfo[]{ //
+        return new MenuItemInfo[]{
                 new MenuItemInfo("Model1", LineAwesomeIcon.FILTER_SOLID.create(), Model1View.class), //
 
                 new MenuItemInfo("Model2", LineAwesomeIcon.APPLE.create(), Model2View.class), //

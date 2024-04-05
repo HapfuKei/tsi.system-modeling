@@ -3,7 +3,6 @@ package com.hapfu.course.data.model.one.dataset;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Entity
 @Table(name = "dataset")
-public class Dataset {
+public class DatasetPresentation {
 
     @Id
     private int variantNumber;
