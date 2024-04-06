@@ -15,14 +15,13 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -36,13 +35,12 @@ public class Model1View extends Div {
     private static final BigDecimal SIMULATION_TIME = BigDecimal.valueOf(500);
 
     private final List<DatasetPresentation> datasetPresentationList;
-    private final Grid<SimulationRecord> sumulationGrid;
+    private final Grid<SimulationRecord> simulationGrid;
     private final Model1Service model1Service;
     private final MetricsCalculator metricsCalculator;
     private Details datasetDetails;
     private Details runSummary;
     private DatasetPresentation selectedDatasetPresentation;
-
 
     public Model1View(DatasetService datasetService, Model1Service model1Service, MetricsCalculator metricsCalculator) {
         this.model1Service = model1Service;
@@ -52,9 +50,13 @@ public class Model1View extends Div {
         datasetPresentationList = datasetService.findAll();
         selectedDatasetPresentation = datasetPresentationList.get(DEFAULT_VARIANT);
 
-        sumulationGrid = new Grid<>(SimulationRecord.class, false);
+        simulationGrid = new Grid<>(SimulationRecord.class, false);
 
-        add(createDataSetSelection(), createSimulationResult());
+        datasetDetails = createDataSetSelection();
+        runSummary = createRunSummary();
+
+        add(datasetDetails, runSummary, simulationGrid);
+        runSimulationAndRefreshUI();
     }
 
     private Details createDataSetSelection() {
@@ -63,17 +65,12 @@ public class Model1View extends Div {
         datasetDetails.add(createDatasetSelectionLayout());
         datasetDetails.addThemeVariants(DetailsVariant.REVERSE, DetailsVariant.FILLED);
         datasetDetails.setOpened(false);
-        datasetDetails.addOpenedChangeListener(e -> datasetDetails.setSummary(createDetailsSummary(selectedDatasetPresentation.getVariantNumber())));
         return datasetDetails;
     }
 
     private Details createRunSummary() {
         runSummary = new Details();
-        HorizontalLayout layout = new HorizontalLayout();
-//        layout.add(loadFactor());
-
-        runSummary.setSummary(new Text("Simulation summary/details"));
-        runSummary.add(layout);
+        runSummary.setSummary(new Text("Simulation Summary"));
         runSummary.addThemeVariants(DetailsVariant.REVERSE, DetailsVariant.FILLED);
         runSummary.setOpened(false);
         return runSummary;
@@ -97,83 +94,71 @@ public class Model1View extends Div {
             selectedDatasetPresentation = event.getValue();
             datasetDetails.setSummary(createDetailsSummary(selectedDatasetPresentation.getVariantNumber()));
             datasetDetails.setOpened(false);
-            runSimulation();
+            runSimulationAndRefreshUI();
         });
 
         layout.add(datasetGrid);
         return layout;
     }
 
-    private Grid<SimulationRecord> createSimulationResult() {
-        sumulationGrid.setSizeFull();
-        sumulationGrid.removeAllColumns();
-        sumulationGrid.addColumn(SimulationRecord::getEvent).setHeader("Event");
-        sumulationGrid.addColumn(SimulationRecord::getCurrentTime).setHeader("Tm");
-        sumulationGrid.addColumn(SimulationRecord::getJ1).setHeader("J1");
-        sumulationGrid.addColumn(SimulationRecord::getJ2).setHeader("J2");
-        sumulationGrid.addColumn(SimulationRecord::getST).setHeader("ST");
-        sumulationGrid.addColumn(SimulationRecord::getS).setHeader("S");
-        sumulationGrid.addColumn(SimulationRecord::getN).setHeader("N");
-        sumulationGrid.addColumn(SimulationRecord::getQ).setHeader("Q");
-        sumulationGrid.getColumns().forEach(col -> col.setAutoWidth(true));
-        runSimulation();
-        return sumulationGrid;
+    private void runSimulationAndRefreshUI() {
+        LinkedList<SimulationRecord> simulationRecords = model1Service.runSimulation(selectedDatasetPresentation, SIMULATION_TIME);
+        refreshRunSummary(simulationRecords);
     }
 
+    private void refreshRunSummary(LinkedList<SimulationRecord> simulationRecords) {
+        simulationGrid.setSizeFull();
+        simulationGrid.removeAllColumns();
+        simulationGrid.addColumn(SimulationRecord::getEvent).setHeader("Event");
+        simulationGrid.addColumn(SimulationRecord::getCurrentTime).setHeader("Tm");
+        simulationGrid.addColumn(SimulationRecord::getJ1).setHeader("J1");
+        simulationGrid.addColumn(SimulationRecord::getJ2).setHeader("J2");
+        simulationGrid.addColumn(SimulationRecord::getST).setHeader("ST");
+        simulationGrid.addColumn(SimulationRecord::getS).setHeader("S");
+        simulationGrid.addColumn(SimulationRecord::getN).setHeader("N");
+        simulationGrid.addColumn(SimulationRecord::getQ).setHeader("Q");
+        simulationGrid.getColumns().forEach(col -> col.setAutoWidth(true));
+        simulationGrid.setItems(simulationRecords);
 
-    private void runSimulation() {
-        LinkedList<SimulationRecord> simulationRecords = model1Service.runSimulation(selectedDatasetPresentation, SIMULATION_TIME);
-        sumulationGrid.setItems(simulationRecords);
+        runSummary.removeAll();
+        runSummary.add(loadFactor(simulationRecords));
+        runSummary.add(downtimeFactor(simulationRecords));
+        runSummary.add(maxQueue(simulationRecords));
+        runSummary.add(averageQueueLength(simulationRecords));
+    }
+
+    private TextField createReadOnlyTextField(String label, BigDecimal value) {
+        TextField textField = new TextField();
+        textField.setLabel(label);
+        textField.setValue(value.toPlainString());
+        textField.setReadOnly(true);
+        return textField;
     }
 
     private Span createDetailsSummary(int variantNumber) {
-        Span summary = new Span("Selected dataset NR " + variantNumber);
+        Span summary = new Span("Selected Dataset NR " + variantNumber);
         summary.getElement().getStyle().set("font-weight", "bold");
         return summary;
     }
 
     private TextField loadFactor(LinkedList<SimulationRecord> simulationRecords) {
         BigDecimal loadFactor = metricsCalculator.calculateLoadFactor(simulationRecords, SIMULATION_TIME);
-
-        TextField textField = new TextField();
-        textField.setLabel("Load factor");
-        textField.setValue(String.valueOf(loadFactor));
-        textField.setClearButtonVisible(false);
-        textField.setReadOnly(true);
-        return textField;
+        return createReadOnlyTextField("Load Factor", loadFactor);
     }
 
     private TextField downtimeFactor(LinkedList<SimulationRecord> simulationRecords) {
         BigDecimal downtimeFactor = metricsCalculator.calculateDowntimeFactor(simulationRecords, SIMULATION_TIME);
-
-        TextField textField = new TextField();
-        textField.setLabel("Downtime factor");
-        textField.setValue(String.valueOf(downtimeFactor));
-        textField.setClearButtonVisible(false);
-        textField.setReadOnly(true);
-        return textField;
+        return createReadOnlyTextField("Downtime factor", downtimeFactor);
     }
 
     private TextField maxQueue(LinkedList<SimulationRecord> simulationRecords) {
         BigDecimal maxQueueLength = metricsCalculator.calculateMaxQueueLength(simulationRecords);
-
-        TextField textField = new TextField();
-        textField.setLabel("Max. of all jobs in queue");
-        textField.setValue(String.valueOf(maxQueueLength));
-        textField.setClearButtonVisible(false);
-        textField.setReadOnly(true);
-        return textField;
+        return createReadOnlyTextField("Max. of all jobs in queue", maxQueueLength);
     }
 
     private TextField averageQueueLength(LinkedList<SimulationRecord> simulationRecords) {
         BigDecimal averageQueueLength = metricsCalculator.calculateAverageQueueLength(simulationRecords);
-
-        TextField textField = new TextField();
-        textField.setLabel("Average of jobs in queue");
-        textField.setValue(String.valueOf(averageQueueLength));
-        textField.setClearButtonVisible(false);
-        textField.setReadOnly(true);
-        return textField;
+        return createReadOnlyTextField("Average of jobs in queue", averageQueueLength);
     }
 
 }
