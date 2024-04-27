@@ -70,7 +70,7 @@ public class Model1Service {
                 q.poll();
                 endProcessingTime = simulationTime;
                 serverLock = false;
-                simulationRecordsResult.add(createSimulationRecord(EventType.E, currentTime, null, endProcessingTime, serverLock, q));
+                simulationRecordsResult.add(createSimulationRecord(EventType.E, currentTime, null, null, serverLock, q));
             }
         }
 

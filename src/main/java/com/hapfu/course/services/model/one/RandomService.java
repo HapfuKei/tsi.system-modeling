@@ -31,7 +31,7 @@ public class RandomService {
     }
 
     public BigDecimal getNormal(double sigma, double mu) {
-        BigDecimal sum = IntStream.range(0, 12)
+        BigDecimal sum = IntStream.range(0, 500)
                 .mapToObj(i -> getBaseRandom())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
