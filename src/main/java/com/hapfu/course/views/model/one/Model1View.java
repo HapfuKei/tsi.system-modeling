@@ -102,8 +102,11 @@ public class Model1View extends Div {
     }
 
     private void runSimulationAndRefreshUI() {
-        LinkedList<SimulationRecord> simulationRecords = model1Service.runSimulation(selectedDatasetPresentation, SIMULATION_TIME);
-        refreshRunSummary(simulationRecords);
+        for (int i = 0; i < 10; i++) {
+            LinkedList<SimulationRecord> simulationRecords = model1Service.runSimulation(selectedDatasetPresentation, SIMULATION_TIME);
+            refreshRunSummary(simulationRecords);
+            System.err.println("--------------------------");
+        }
     }
 
     private void refreshRunSummary(LinkedList<SimulationRecord> simulationRecords) {
@@ -143,21 +146,25 @@ public class Model1View extends Div {
 
     private TextField loadFactor(LinkedList<SimulationRecord> simulationRecords) {
         BigDecimal loadFactor = metricsCalculator.calculateLoadFactor(simulationRecords, SIMULATION_TIME);
+        System.err.println("Load Factor"+loadFactor);
         return createReadOnlyTextField("Load Factor", loadFactor);
     }
 
     private TextField downtimeFactor(LinkedList<SimulationRecord> simulationRecords) {
         BigDecimal downtimeFactor = metricsCalculator.calculateDowntimeFactor(simulationRecords, SIMULATION_TIME);
+        System.err.println("Downtime factor"+downtimeFactor);
         return createReadOnlyTextField("Downtime factor", downtimeFactor);
     }
 
     private TextField maxQueue(LinkedList<SimulationRecord> simulationRecords) {
         BigDecimal maxQueueLength = metricsCalculator.calculateMaxQueueLength(simulationRecords);
+        System.err.println("Max. of all jobs in queue"+maxQueueLength);
         return createReadOnlyTextField("Max. of all jobs in queue", maxQueueLength);
     }
 
     private TextField averageQueueLength(LinkedList<SimulationRecord> simulationRecords) {
         BigDecimal averageQueueLength = metricsCalculator.calculateAverageQueueLength(simulationRecords);
+        System.err.println("Average of jobs in queue"+averageQueueLength);
         return createReadOnlyTextField("Average of jobs in queue", averageQueueLength);
     }
 

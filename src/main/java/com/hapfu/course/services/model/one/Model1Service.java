@@ -18,7 +18,7 @@ public class Model1Service {
 
     private final DatasetService datasetService;
 
-    public LinkedList<SimulationRecord> runSimulation(DatasetPresentation datasetPresentation,BigDecimal simulationTime) {
+    public LinkedList<SimulationRecord> runSimulation(DatasetPresentation datasetPresentation, BigDecimal simulationTime) {
         DatasetImpl dataset = datasetService.mapToImpl(datasetPresentation);
         LinkedList<SimulationRecord> simulationRecordsResult = new LinkedList<>();
 
@@ -29,7 +29,7 @@ public class Model1Service {
                 .currentTime(BigDecimal.ZERO)
                 .J1(initJ1)
                 .J2(initJ2)
-                .ST(BigDecimal.valueOf(501))
+                .ST(simulationTime)
                 .N(0)
                 .build();
         simulationRecordsResult.add(initRecord);
@@ -42,6 +42,10 @@ public class Model1Service {
         boolean serverLock = false;
 
         while (true) {
+            if (J1NextTime.min(J2NextTime).min(endProcessingTime).compareTo(simulationTime) >= 0) {
+                break;
+            }
+
             if (J1NextTime.min(J2NextTime).min(endProcessingTime).equals(J1NextTime)) {
 
                 if (!serverLock) {
@@ -64,12 +68,10 @@ public class Model1Service {
                 q.add(EventType.J2);
                 simulationRecordsResult.add(createSimulationRecord(EventType.J2, currentTime, J2NextTime, endProcessingTime, serverLock, q));
             } else if (endProcessingTime.min(J1NextTime).min(J2NextTime).equals(endProcessingTime)) {
-                if (J1NextTime.min(J2NextTime).min(endProcessingTime).compareTo(simulationTime) >= 0) {
-                    break;
-                }
                 q.poll();
-                endProcessingTime = simulationTime;
                 serverLock = false;
+                currentTime = endProcessingTime;
+                endProcessingTime = simulationTime;
                 simulationRecordsResult.add(createSimulationRecord(EventType.E, currentTime, null, endProcessingTime, serverLock, q));
             }
         }
