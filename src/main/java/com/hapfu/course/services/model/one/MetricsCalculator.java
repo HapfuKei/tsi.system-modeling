@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.LinkedList;
+import java.util.Objects;
 
 @Service
 public class MetricsCalculator {
@@ -13,6 +14,7 @@ public class MetricsCalculator {
     public BigDecimal calculateLoadFactor(LinkedList<SimulationRecord> simulationRecords, BigDecimal simulationTime) {
         BigDecimal totalProcessingTime = simulationRecords.stream()
                 .map(SimulationRecord::getST)
+                .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return totalProcessingTime.divide(simulationTime, MathContext.DECIMAL32);
